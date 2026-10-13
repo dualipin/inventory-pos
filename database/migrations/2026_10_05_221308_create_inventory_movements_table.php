@@ -14,11 +14,13 @@ return new class extends Migration
         Schema::create('inventory_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('inventory_id')->constrained()->cascadeOnDelete();
-            $table->string('type');
-            $table->unsignedInteger('quantity');
+            $table->string('type'); // 'sale', 'restock', 'loss', 'adjustment'
+            $table->integer('quantity'); // <--- Quita el 'unsigned'. Permite positivos y negativos.
+            $table->nullableMorphs('reference'); // ID de la venta, compra o ajuste relacionado
             $table->text('description')->nullable();
             $table->timestamps();
         });
+
     }
 
     /**
