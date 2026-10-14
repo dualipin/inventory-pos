@@ -22,7 +22,7 @@ class InventoryMovementSeeder extends Seeder
 
                 InventoryMovement::query()->create([
                     'inventory_id' => $inventory->id,
-                    'type' => MovementType::Entrada,
+                    'type' => MovementType::Purchase,
                     'quantity' => $reception,
                     'description' => 'Recepción inicial de mercancía en almacén',
                 ]);
@@ -30,8 +30,8 @@ class InventoryMovementSeeder extends Seeder
                 if (fake()->boolean(60)) {
                     InventoryMovement::query()->create([
                         'inventory_id' => $inventory->id,
-                        'type' => MovementType::Salida,
-                        'quantity' => fake()->numberBetween(10, 50),
+                        'type' => MovementType::Sale,
+                        'quantity' => -fake()->numberBetween(10, min(50, $reception)),
                         'description' => 'Salida por venta en la plataforma web',
                     ]);
                 }
