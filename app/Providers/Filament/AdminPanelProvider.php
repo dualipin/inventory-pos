@@ -24,14 +24,15 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path('')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
-            ->brandName('LALA CEDIS Atasta')
+            ->brandName('Inventory POS')
             ->brandLogo(asset('assets/logo.png'))
             ->brandLogoHeight('2.5rem')
             ->profile()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Mist,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
