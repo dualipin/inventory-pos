@@ -12,22 +12,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Existencias de un producto en almacén y en la plataforma web comercial.
  */
-#[Fillable(['product_id', 'physical_stock', 'digital_stock', 'last_counted_at'])]
+#[Fillable(['product_id', 'stock', 'last_counted_at'])]
 class Inventory extends Model
 {
     /** @use HasFactory<InventoryFactory> */
     use HasFactory;
 
     protected $attributes = [
-        'physical_stock' => 0,
-        'digital_stock' => 0,
+        'stock' => 0,
     ];
 
     protected function casts(): array
     {
         return [
-            'physical_stock' => 'integer',
-            'digital_stock' => 'integer',
+            'stock' => 'integer',
             'last_counted_at' => 'datetime',
         ];
     }

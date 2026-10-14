@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -36,8 +37,40 @@ class InventoryMovement extends Model
     protected static function booted(): void
     {
         static::creating(function (self $movement): void {
+            $movement->normalizeQuantity();
             $movement->applyStockChange();
         });
+    }
+
+    public function reference(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Keeps movement direction consistent with its business meaning.
+     *
+     * @throws ValidationException
+     */
+    private function normalizeQuantity(): void
+    {
+        if (! is_int($this->quantity) || $this->quantity === 0) {
+            throw ValidationException::withMessages([
+                'quantity' => 'La cantidad debe ser un entero diferente de cero.',
+            ]);
+        }
+
+        if (! $this->type instanceof MovementType) {
+            throw ValidationException::withMessages([
+                'type' => 'El tipo de movimiento es obligatorio.',
+            ]);
+        }
+
+        $this->quantity = match ($this->type) {
+            MovementType::Purchase, MovementType::ReturnIn => abs($this->quantity),
+            MovementType::Sale, MovementType::Shrinkage => -abs($this->quantity),
+            MovementType::Adjustment => $this->quantity,
+        };
     }
 
     /**
@@ -59,30 +92,22 @@ class InventoryMovement extends Model
             ]);
         }
 
-        if ($this->quantity < 1) {
-            throw ValidationException::withMessages([
-                'quantity' => 'La cantidad debe ser al menos 1 unidad.',
-            ]);
-        }
-
         DB::transaction(function (): void {
             $inventory = Inventory::query()
                 ->whereKey($this->inventory_id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $physicalStock = $inventory->physical_stock + $this->type->delta($this->quantity);
-            $digitalStock = $inventory->digital_stock + $this->type->delta($this->quantity);
+            $stock = $inventory->stock + $this->quantity;
 
-            if ($physicalStock < 0 || $digitalStock < 0) {
+            if ($stock < 0) {
                 throw ValidationException::withMessages([
-                    'quantity' => "Stock insuficiente: hay {$inventory->physical_stock} unidades en almacén y {$inventory->digital_stock} disponibles en la plataforma web.",
+                    'quantity' => "Stock insuficiente: hay {$inventory->stock} unidades disponibles.",
                 ]);
             }
 
             $inventory->update([
-                'physical_stock' => $physicalStock,
-                'digital_stock' => $digitalStock,
+                'stock' => $stock,
             ]);
         });
     }
