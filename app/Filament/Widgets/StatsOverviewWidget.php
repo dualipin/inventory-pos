@@ -16,7 +16,7 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
         $totalProducts = Product::count();
 
         $lowStockCount = Inventory::query()
-            ->where('physical_stock', '<', 10)
+            ->where('stock', '<', 10)
             ->count();
 
         $activePromotions = Promotion::query()

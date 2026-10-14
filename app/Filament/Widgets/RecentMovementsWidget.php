@@ -40,10 +40,9 @@ class RecentMovementsWidget extends BaseTableWidget
                     ->label('Cantidad')
                     ->alignEnd()
                     ->formatStateUsing(
-                        fn (InventoryMovement $record): string => ($record->type === MovementType::Salida ? '−' : '+')
-                            .' '.$record->quantity
+                        fn (InventoryMovement $record) => $record->quantity
                     )
-                    ->color(fn (InventoryMovement $record): string => $record->type === MovementType::Entrada ? 'success' : 'danger'),
+                    ->color(fn (InventoryMovement $record): string => $record->type === MovementType::Purchase ? 'success' : 'danger'),
 
                 Tables\Columns\TextColumn::make('description')
                     ->label('Nota')
