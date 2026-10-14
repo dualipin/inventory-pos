@@ -20,8 +20,7 @@ class InventoryFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
-            'physical_stock' => fake()->numberBetween(100, 500),
-            'digital_stock' => fake()->numberBetween(100, 500),
+            'stock' => fake()->numberBetween(100, 500),
             'last_counted_at' => fake()->dateTimeBetween('-30 days'),
         ];
     }
@@ -32,8 +31,7 @@ class InventoryFactory extends Factory
     public function empty(): static
     {
         return $this->state(fn (array $attributes) => [
-            'physical_stock' => 0,
-            'digital_stock' => 0,
+            'stock' => 0,
         ]);
     }
 }

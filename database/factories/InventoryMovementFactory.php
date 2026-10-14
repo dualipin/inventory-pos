@@ -21,7 +21,7 @@ class InventoryMovementFactory extends Factory
     {
         return [
             'inventory_id' => Inventory::factory(),
-            'type' => MovementType::Entrada,
+            'type' => MovementType::Purchase,
             'quantity' => fake()->numberBetween(1, 50),
             'description' => 'Recepción de mercancía en almacén',
         ];
@@ -33,7 +33,8 @@ class InventoryMovementFactory extends Factory
     public function salida(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => MovementType::Salida,
+            'type' => MovementType::Sale,
+            'quantity' => -fake()->numberBetween(1, 50),
             'description' => 'Salida por venta en la plataforma web',
         ]);
     }
