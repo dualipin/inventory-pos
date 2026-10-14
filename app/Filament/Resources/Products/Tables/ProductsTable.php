@@ -30,6 +30,9 @@ class ProductsTable
                     ->label('Precio')
                     ->money('MXN')
                     ->sortable(),
+                TextColumn::make('inventory.stock')
+                    ->label('Stock')
+                    ->sortable(),
                 TextColumn::make('packaging')
                     ->label('Empaque')
                     ->searchable()
@@ -41,16 +44,6 @@ class ProductsTable
                 TextColumn::make('size')
                     ->label('Tamaño')
                     ->searchable(),
-                TextColumn::make('inventory.physical_stock')
-                    ->label('Stock físico')
-                    ->numeric()
-                    ->sortable()
-                    ->placeholder('Sin inventario'),
-                TextColumn::make('inventory.digital_stock')
-                    ->label('Stock digital')
-                    ->numeric()
-                    ->sortable()
-                    ->placeholder('Sin inventario'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
