@@ -7,31 +7,31 @@ use Filament\Support\Contracts\HasLabel;
 
 enum MovementType: string implements HasColor, HasLabel
 {
-    case Entrada = 'entrada';
-
-    case Salida = 'salida';
+    case Sale = 'venta';
+    case Purchase = 'compra';
+    case Adjustment = 'ajuste';
+    case ReturnIn = 'devolucion_entrada';
+    case Shrinkage = 'merma';
 
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::Entrada => 'Entrada',
-            self::Salida => 'Salida',
+            self::Sale => 'Venta',
+            self::Purchase => 'Compra',
+            self::Adjustment => 'Ajuste',
+            self::ReturnIn => 'Devolución de entrada',
+            self::Shrinkage => 'Merma',
         };
     }
 
     public function getColor(): ?string
     {
         return match ($this) {
-            self::Entrada => 'success',
-            self::Salida => 'danger',
-        };
-    }
-
-    public function delta(int $quantity): int
-    {
-        return match ($this) {
-            self::Entrada => $quantity,
-            self::Salida => -$quantity,
+            self::Sale => 'danger',
+            self::Purchase => 'success',
+            self::Adjustment => 'warning',
+            self::ReturnIn => 'primary',
+            self::Shrinkage => 'secondary',
         };
     }
 }
