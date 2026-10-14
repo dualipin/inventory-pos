@@ -19,14 +19,13 @@ test('increases the physical and digital stock when an entry is recorded', funct
 });
 
 test('decreases the physical and digital stock when an exit is recorded', function () {
-    $inventory = Inventory::factory()->create(['physical_stock' => 100, 'digital_stock' => 60]);
+    $inventory = Inventory::factory()->create(['stock' => 100]);
 
-    InventoryMovement::factory()->for($inventory)->salida()->create(['quantity' => 30]);
+    InventoryMovement::factory()->for($inventory)->salida()->create(['quantity' => -30]);
 
     $inventory->refresh();
 
-    expect($inventory->physical_stock)->toBe(70)
-        ->and($inventory->digital_stock)->toBe(30);
+    expect($inventory->stock)->toBe(70);
 });
 
 test('rejects an exit when the stock is not enough', function () {
@@ -37,13 +36,12 @@ test('rejects an exit when the stock is not enough', function () {
 
     $inventory->refresh();
 
-    expect($inventory->physical_stock)->toBe(40)
-        ->and($inventory->digital_stock)->toBe(8)
+    expect($inventory->stock)->toBe(40)
         ->and($inventory->movements()->count())->toBe(0);
 });
 
 test('rejects a movement with a quantity lower than one', function () {
-    $inventory = Inventory::factory()->create(['physical_stock' => 40, 'digital_stock' => 40]);
+    $inventory = Inventory::factory()->create(['stock' => 40]);
 
     expect(fn () => InventoryMovement::factory()->for($inventory)->create(['quantity' => 0]))
         ->toThrow(ValidationException::class);

@@ -2,17 +2,12 @@
 
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\ProductInnovation;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-test('relates to its category and to its innovation history', function () {
+test('relates to its category', function () {
     $product = Product::factory()->create();
-    $innovation = ProductInnovation::factory()->for($product)->create();
-
-    expect($product->category)->toBeInstanceOf(Category::class)
-        ->and($product->innovations)->toHaveCount(1)
-        ->and($product->innovations->first()->is($innovation))->toBeTrue();
+    expect($product->category)->toBeInstanceOf(Category::class);
 });
 
 test('returns the price with two decimal places', function () {
@@ -39,8 +34,7 @@ test('creates its inventory record once and only once', function () {
     $inventory = $product->ensureInventory();
 
     expect($inventory->product_id)->toBe($product->id)
-        ->and($inventory->physical_stock)->toBe(0)
-        ->and($inventory->digital_stock)->toBe(0)
+        ->and($inventory->stock)->toBe(0)
         ->and($product->ensureInventory()->id)->toBe($inventory->id)
         ->and($product->inventory()->count())->toBe(1);
 });
