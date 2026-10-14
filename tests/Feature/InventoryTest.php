@@ -25,13 +25,11 @@ test('allows only one inventory record per product', function () {
 
 test('casts the stock counters and the last physical count', function () {
     $inventory = Inventory::factory()->create([
-        'physical_stock' => 120,
-        'digital_stock' => 80,
+        'stock' => 120,
         'last_counted_at' => '2026-09-30 10:00:00',
     ]);
 
-    expect($inventory->physical_stock)->toBe(120)
-        ->and($inventory->digital_stock)->toBe(80)
+    expect($inventory->stock)->toBe(120)
         ->and($inventory->last_counted_at)->toBeInstanceOf(Carbon::class)
         ->and($inventory->last_counted_at->toDateTimeString())->toBe('2026-09-30 10:00:00');
 });
