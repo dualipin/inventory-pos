@@ -122,22 +122,19 @@ jobs:
           npm ci
           npm run build
 
-      - name: Create Zip and Unzip Script
+      - name: Prepare Deployment Files
         run: |
-          # 1. Crear estructura temporal para el despliegue
-          mkdir -p deploy_tmp/public
+          # 1. Empaquetar todo el proyecto (esto incluye tu .htaccess original y seguro)
+          zip -r build.zip . -x "*.git*" "*node_modules*" "tests*" "*.env*" "*.github*" "*.vscode*" "storage/logs/*"
 
-          # 2. Comprimir todo y guardarlo dentro de deploy_tmp/ (excluyendo la propia carpeta)
-          zip -r deploy_tmp/build.zip . -x "*.git*" "*node_modules*" "tests*" "*.env*" "*.github*" "*.vscode*" "storage/logs/*" "deploy_tmp/*"
-
-          # 3. Crear script PHP de descompresión en su ubicación correcta
-          cat << 'EOF' > deploy_tmp/public/unzip.php
+          # 2. Crear el script de descompresión directamente en la raíz
+          cat << 'EOF' > deploy.php
           <?php
           $zip = new ZipArchive;
-          if ($zip->open(__DIR__ . '/../build.zip') === TRUE) {
-              $zip->extractTo(__DIR__ . '/../');
+          if ($zip->open(__DIR__ . '/build.zip') === TRUE) {
+              $zip->extractTo(__DIR__);
               $zip->close();
-              unlink(__DIR__ . '/../build.zip');
+              unlink(__DIR__ . '/build.zip');
               unlink(__FILE__);
               echo "Despliegue completado con exito.";
           } else {
@@ -147,6 +144,9 @@ jobs:
           ?>
           EOF
 
+          # 3. Crear un .htaccess temporal para evitar que el servidor nos redirija a Laravel
+          echo "RewriteEngine Off" > .htaccess
+
       - name: Upload ZIP via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -155,29 +155,25 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           timeout: 120000
-          # Usamos local-dir para subir SOLO la carpeta que preparamos
-          local-dir: ./deploy_tmp/
           server-dir: ./${{ secrets.SERVER_DIR }}/
+          # Solo subimos los 3 archivos clave, evitando borrar nada en tu servidor
+          exclude: |
+            **
+            !build.zip
+            !deploy.php
+            !.htaccess
 
       - name: Execute Extraction on Server
         run: |
-          echo "Intentando descomprimir usando la ruta explícita (Primer deploy sin .htaccess)..."
-          URL_EXPLICITA="https://${{ secrets.APP_DOMAIN }}/public/unzip.php"
-          URL_HTACCESS="https://${{ secrets.APP_DOMAIN }}/unzip.php"
-          
-          HTTP_STATUS=$(curl -s -L -w "%{http_code}" "$URL_EXPLICITA" -o response.txt)
-          
-          if [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "La ruta explícita falló con código $HTTP_STATUS."
-            echo "Ejecutando fallback: Intentando ruta con reescritura de .htaccess..."
-            HTTP_STATUS=$(curl -s -L -w "%{http_code}" "$URL_HTACCESS" -o response.txt)
-          fi
+          echo "Ejecutando descompresión en la raíz..."
+          # Hacemos la petición directa a la raíz, que ahora está temporalmente liberada
+          HTTP_STATUS=$(curl -s -L -w "%{http_code}" https://${{ secrets.APP_DOMAIN }}/deploy.php -o response.txt)
           
           if [ "$HTTP_STATUS" -eq 200 ]; then
             cat response.txt
             echo -e "\n¡Despliegue finalizado con éxito!"
           else
-            echo "Error HTTP final: $HTTP_STATUS en ambas rutas."
+            echo "Error HTTP: $HTTP_STATUS"
             cat response.txt
             exit 1
           fi
