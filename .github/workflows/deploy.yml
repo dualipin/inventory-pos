@@ -161,13 +161,23 @@ jobs:
 
       - name: Execute Extraction on Server
         run: |
-          echo "Descomprimiendo en el servidor..."
-          HTTP_STATUS=$(curl -s -w "%{http_code}" https://${{ secrets.APP_DOMAIN }}/unzip.php -o response.txt)
+          echo "Intentando descomprimir usando la ruta explícita (Primer deploy sin .htaccess)..."
+          URL_EXPLICITA="https://${{ secrets.APP_DOMAIN }}/public/unzip.php"
+          URL_HTACCESS="https://${{ secrets.APP_DOMAIN }}/unzip.php"
+          
+          HTTP_STATUS=$(curl -s -L -w "%{http_code}" "$URL_EXPLICITA" -o response.txt)
+          
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "La ruta explícita falló con código $HTTP_STATUS."
+            echo "Ejecutando fallback: Intentando ruta con reescritura de .htaccess..."
+            HTTP_STATUS=$(curl -s -L -w "%{http_code}" "$URL_HTACCESS" -o response.txt)
+          fi
           
           if [ "$HTTP_STATUS" -eq 200 ]; then
             cat response.txt
+            echo -e "\n¡Despliegue finalizado con éxito!"
           else
-            echo "Error HTTP: $HTTP_STATUS"
+            echo "Error HTTP final: $HTTP_STATUS en ambas rutas."
             cat response.txt
             exit 1
           fi
