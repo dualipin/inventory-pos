@@ -21,19 +21,14 @@ class InventoryForm
                     ->disabledOn('edit')
                     ->unique(ignoreRecord: true)
                     ->required(),
-                TextInput::make('physical_stock')
-                    ->label('Stock físico')
+                TextInput::make('stock')
+                    ->label('Existencias actuales')
                     ->numeric()
                     ->disabled()
-                    ->helperText('El stock físico se actualiza con los movimientos de inventario.'),
-                TextInput::make('digital_stock')
-                    ->label('Stock digital')
-                    ->numeric()
-                    ->disabled()
-                    ->helperText('El stock digital se actualiza con los movimientos de inventario.'),
+                    ->helperText('Las existencias se actualizan desde los movimientos de inventario.'),
                 DateTimePicker::make('last_counted_at')
                     ->label('Último conteo')
-                    ->helperText('Fecha y hora del último conteo físico realizado.'),
+                    ->helperText('Fecha del último conteo físico realizado.'),
             ]);
     }
 }

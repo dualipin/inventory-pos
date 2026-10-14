@@ -30,10 +30,11 @@ class InventoryMovementForm
                 Select::make('type')
                     ->label('Tipo de movimiento')
                     ->options(MovementType::class)
-                    ->default(MovementType::Entrada->value)
-                    ->required(),
+                    ->default(MovementType::Purchase)
+                    ->required()
+                    ->helperText('Las entradas suman existencias; las salidas las descuentan.'),
                 TextInput::make('quantity')
-                    ->label('Cantidad')
+                    ->label('Cantidad de unidades')
                     ->required()
                     ->numeric()
                     ->integer()

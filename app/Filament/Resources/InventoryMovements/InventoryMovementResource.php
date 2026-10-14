@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InventoryMovements;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\InventoryMovements\Pages\CreateInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Pages\ListInventoryMovements;
 use App\Filament\Resources\InventoryMovements\Schemas\InventoryMovementForm;
@@ -29,7 +30,19 @@ class InventoryMovementResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;
 
+    protected static ?int $navigationSort = -80;
+
     protected static ?string $recordTitleAttribute = 'description';
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(UserRole::ADMIN, UserRole::INVENTORY) ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canViewAny();
+    }
 
     public static function canEdit(Model $record): bool
     {
