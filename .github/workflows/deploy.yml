@@ -79,7 +79,7 @@ jobs:
     name: Build and Deploy
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 120 # el primer deploy por FTP es lento
+    timeout-minutes: 30 # Reducimos el tiempo porque el ZIP es muy rápido
     environment: production
 
     steps:
@@ -92,7 +92,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, xml, ctype, iconv, pdo_mysql, bcmath, fileinfo, intl
+          extensions: mbstring, xml, ctype, iconv, pdo_mysql, bcmath, fileinfo, intl, zip
           tools: composer:v2
           coverage: none
 
@@ -108,8 +108,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
-      # Sin dev: el vendor/ que se sube no incluye Pest, Boost, etc.
-      # Los scripts de composer siguen activos: filament:upgrade publica los assets de Filament en public/
       - name: Install Dependencies (production)
         run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
@@ -124,7 +122,30 @@ jobs:
           npm ci
           npm run build
 
-      - name: Sync files via FTP
+      - name: Create Zip and Unzip Script
+        run: |
+          # 1. Crear script PHP de descompresión en la carpeta public/
+          cat << 'EOF' > public/unzip.php
+          <?php
+          $zip = new ZipArchive;
+          // El script está en public/, el zip en la raíz
+          if ($zip->open(__DIR__ . '/../build.zip') === TRUE) {
+              $zip->extractTo(__DIR__ . '/../');
+              $zip->close();
+              unlink(__DIR__ . '/../build.zip'); // Elimina el zip por seguridad
+              unlink(__FILE__);                  // Se auto-elimina
+              echo "Despliegue completado con exito.";
+          } else {
+              http_response_code(500);
+              echo "Error al abrir el archivo ZIP.";
+          }
+          ?>
+          EOF
+
+          # 2. Comprimir todo el código listo para producción (excluyendo basura)
+          zip -r build.zip . -x "*.git*" "*node_modules*" "tests*" "*.env*" "*.github*" "*.vscode*" "storage/logs/*"
+
+      - name: Upload ZIP via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -132,59 +153,23 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           timeout: 120000
-          log-level: standard
           server-dir: ./${{ secrets.SERVER_DIR }}/
+          # Solo subimos el .zip y el script, ignorando TODO lo demás
           exclude: |
-            **/.git*
-            **/.git*/**
-            **/.ai/**
-            **/.github/**
-            **/.claude/**
-            **/.cursor/**
-            **/.opencode/**
-            **/.agents/**
-            **/.agent/**
-            **/.vscode/**
-            **/.idea/**
-            **/node_modules/**
-            **/tests/**
-            **/*.md
-            *.md
-            docs/**
-            package.json
-            package-lock.json
-            yarn.lock
-            pnpm-lock.yaml
-            .npmrc
-            vite.config.*
-            tailwind.config.*
-            postcss.config.*
-            tsconfig*.json
-            phpunit.xml
-            phpunit.xml.dist
-            Pest.php
-            phpstan.neon*
-            .prettier*
-            .eslint*
-            LICENSE
-            .env
-            .env.*
-            *.sql
-            *.sqlite
-            *.db
-            *.log
-            docker/**
-            docker-compose.yml
-            Makefile
-            .editorconfig
-            .phpstorm.meta.php
-            _ide_helper.php
-            _ide_helper_models.php
-            boost.json
-            opencode.json
-            skills-lock.json
-            skill-lock.json
-            database/**
-            public/hot
-            public/fonts-manifest.dev.json
-            vendor/**
+            **
+            !build.zip
+            !public/unzip.php
+
+      - name: Execute Extraction on Server
+        run: |
+          # Disparamos el script entrando a la URL
+          echo "Descomprimiendo en el servidor..."
+          HTTP_STATUS=$(curl -s -w "%{http_code}" https://${{ secrets.APP_DOMAIN }}/unzip.php -o response.txt)
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            cat response.txt
+          else
+            echo "Error HTTP: $HTTP_STATUS"
+            cat response.txt
+            exit 1
+          fi
