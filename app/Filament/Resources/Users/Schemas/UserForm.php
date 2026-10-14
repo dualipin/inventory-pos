@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\UserRole;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Validation\Rules\Password;
@@ -22,6 +24,11 @@ class UserForm
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
+                Select::make('role')
+                    ->label('Responsabilidad')
+                    ->options(UserRole::class)
+                    ->required()
+                    ->native(false),
                 TextInput::make('password')
                     ->label('Contraseña')
                     ->password()
