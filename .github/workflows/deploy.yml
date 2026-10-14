@@ -124,16 +124,21 @@ jobs:
 
       - name: Create Zip and Unzip Script
         run: |
-          # 1. Crear script PHP de descompresión en la carpeta public/
-          cat << 'EOF' > public/unzip.php
+          # 1. Crear estructura temporal para el despliegue
+          mkdir -p deploy_tmp/public
+
+          # 2. Comprimir todo y guardarlo dentro de deploy_tmp/ (excluyendo la propia carpeta)
+          zip -r deploy_tmp/build.zip . -x "*.git*" "*node_modules*" "tests*" "*.env*" "*.github*" "*.vscode*" "storage/logs/*" "deploy_tmp/*"
+
+          # 3. Crear script PHP de descompresión en su ubicación correcta
+          cat << 'EOF' > deploy_tmp/public/unzip.php
           <?php
           $zip = new ZipArchive;
-          // El script está en public/, el zip en la raíz
           if ($zip->open(__DIR__ . '/../build.zip') === TRUE) {
               $zip->extractTo(__DIR__ . '/../');
               $zip->close();
-              unlink(__DIR__ . '/../build.zip'); // Elimina el zip por seguridad
-              unlink(__FILE__);                  // Se auto-elimina
+              unlink(__DIR__ . '/../build.zip');
+              unlink(__FILE__);
               echo "Despliegue completado con exito.";
           } else {
               http_response_code(500);
@@ -141,9 +146,6 @@ jobs:
           }
           ?>
           EOF
-
-          # 2. Comprimir todo el código listo para producción (excluyendo basura)
-          zip -r build.zip . -x "*.git*" "*node_modules*" "tests*" "*.env*" "*.github*" "*.vscode*" "storage/logs/*"
 
       - name: Upload ZIP via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -153,16 +155,12 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           timeout: 120000
+          # Usamos local-dir para subir SOLO la carpeta que preparamos
+          local-dir: ./deploy_tmp/
           server-dir: ./${{ secrets.SERVER_DIR }}/
-          # Solo subimos el .zip y el script, ignorando TODO lo demás
-          exclude: |
-            **
-            !build.zip
-            !public/unzip.php
 
       - name: Execute Extraction on Server
         run: |
-          # Disparamos el script entrando a la URL
           echo "Descomprimiendo en el servidor..."
           HTTP_STATUS=$(curl -s -w "%{http_code}" https://${{ secrets.APP_DOMAIN }}/unzip.php -o response.txt)
           
