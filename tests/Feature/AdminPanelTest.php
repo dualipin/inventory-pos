@@ -97,3 +97,11 @@ test('inventory movements are append only', function () {
         ->get("/inventory-movements/{$movement->getKey()}/edit")
         ->assertNotFound();
 });
+
+test('authenticated cashier or admin can render the point of sale page', function () {
+    $this->actingAs(User::factory(['role' => UserRole::CASHIER])->create())
+        ->get('/point-of-sale')
+        ->assertOk()
+        ->assertSee('Nueva venta')
+        ->assertSee('Ticket actual');
+});

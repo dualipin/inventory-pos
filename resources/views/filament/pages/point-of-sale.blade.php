@@ -1,4 +1,4 @@
-<x-filament-panels::page>
+<x-filament-panels::page class="pos-page" :full-height="true">
     <div class="pos-shell">
         <section class="pos-catalog">
             <div class="pos-header">
@@ -35,24 +35,33 @@
                         type="button"
                         wire:click="addProduct({{ $inventory->id }})"
                         class="pos-product"
+                        title="{{ $inventory->product->name }}"
                     >
                         <span class="pos-product-image">
                             @if ($inventory->product->image_url)
-                                <img src="{{ $inventory->product->image_url }}" alt="" />
+                                <img src="{{ $inventory->product->image_url }}" alt="{{ $inventory->product->name }}" loading="lazy" />
                             @else
                                 <x-filament::icon icon="heroicon-o-cube" class="pos-product-placeholder" />
                             @endif
                         </span>
+
                         <span class="pos-product-copy">
-                            <span class="pos-product-category">{{ $inventory->product->category?->name ?? 'Producto' }}</span>
-                            <span class="pos-product-name">{{ $inventory->product->name }}</span>
-                            <span class="pos-product-bottom">
-                                <strong>${{ number_format((float) $inventory->product->price, 2) }}</strong>
-                                <small>{{ $inventory->stock }} disponibles</small>
+                            <span class="pos-product-header">
+                                <span class="pos-product-category">{{ $inventory->product->category?->name ?? 'Producto' }}</span>
+                                <span class="pos-product-stock @if ($inventory->stock <= 5) is-low @endif">
+                                    <span class="pos-stock-dot"></span>
+                                    {{ $inventory->stock }} disp.
+                                </span>
                             </span>
-                        </span>
-                        <span class="pos-add">
-                            <x-filament::icon icon="heroicon-m-plus" />
+
+                            <span class="pos-product-name">{{ $inventory->product->name }}</span>
+
+                            <span class="pos-product-footer">
+                                <strong class="pos-product-price">${{ number_format((float) $inventory->product->price, 2) }}</strong>
+                                <span class="pos-add-btn" aria-hidden="true">
+                                    <x-filament::icon icon="heroicon-m-plus" />
+                                </span>
+                            </span>
                         </span>
                     </button>
                 @empty

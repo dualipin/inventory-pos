@@ -9,6 +9,7 @@ use App\Models\Inventory;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
@@ -28,6 +29,8 @@ class PointOfSale extends Page
 
     protected string $view = 'filament.pages.point-of-sale';
 
+    protected \Filament\Support\Enums\Width|string|null $maxContentWidth = Width::Full;
+
     public string $search = '';
 
     public string $paymentMethod = PaymentMethod::Cash->value;
@@ -45,6 +48,29 @@ class PointOfSale extends Page
     public function getTitle(): string|Htmlable
     {
         return 'Punto de venta';
+    }
+
+    public function getMaxContentWidth(): Width|string|null
+    {
+        return Width::Full;
+    }
+
+    public function getHeading(): string|Htmlable|null
+    {
+        return null;
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getPageClasses(): array
+    {
+        return ['pos-page'];
     }
 
     public function addProduct(int $inventoryId): void
@@ -178,7 +204,7 @@ class PointOfSale extends Page
             ->where('stock', '>', 0)
             ->orderBy('stock')
             ->orderBy('id')
-            ->limit(24)
+            ->limit(50)
             ->get();
     }
 
