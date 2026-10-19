@@ -13,6 +13,7 @@ use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use UnitEnum;
 
 class PointOfSale extends Page
@@ -75,11 +76,15 @@ class PointOfSale extends Page
 
     public function addProduct(int $inventoryId): void
     {
-        $inventory = Inventory::query()
-            ->with('product')
-            ->whereKey($inventoryId)
-            ->whereHas('product', fn ($query) => $query->where('is_active', true))
-            ->first();
+        $inventory = $this->products->firstWhere('id', $inventoryId);
+
+        if ($inventory === null && isset($this->cart[$inventoryId])) {
+            $inventory = Inventory::query()
+                ->with(['product.media'])
+                ->whereKey($inventoryId)
+                ->whereHas('product', fn ($query) => $query->where('is_active', true))
+                ->first();
+        }
 
         if ($inventory === null || $inventory->product === null) {
             Notification::make()
@@ -188,10 +193,16 @@ class PointOfSale extends Page
     /**
      * @return Collection<int, Inventory>
      */
+    #[Computed]
     public function getProductsProperty(): Collection
     {
         return Inventory::query()
-            ->with(['product.category'])
+            ->select(['id', 'product_id', 'stock'])
+            ->with([
+                'product:id,category_id,name,price,barcode,is_active',
+                'product.category:id,name',
+                'product.media',
+            ])
             ->whereHas('product', function ($query): void {
                 $query->where('is_active', true)
                     ->when($this->search !== '', function ($query): void {
