@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
@@ -34,6 +35,21 @@ class InventoryResource extends Resource
     protected static ?int $navigationSort = -90;
 
     protected static ?string $recordTitleAttribute = 'product.name';
+
+    public static function getRecordTitle(?Model $record): string|Htmlable|null
+    {
+        if (! $record instanceof Inventory) {
+            return parent::getRecordTitle($record);
+        }
+
+        $productName = $record->product?->name;
+
+        if ($productName === null) {
+            return parent::getRecordTitle($record);
+        }
+
+        return $productName;
+    }
 
     public static function canViewAny(): bool
     {

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Promotions\Tables;
 
 use App\Enums\DiscountType;
+use App\Filament\Resources\Promotions\PromotionResource;
 use App\Models\Promotion;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -13,6 +14,7 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class PromotionsTable
 {
@@ -27,6 +29,12 @@ class PromotionsTable
                 TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable(),
+                TextColumn::make('description')
+                    ->label('Descripción')
+                    ->limit(50)
+                    ->wrap()
+                    ->placeholder('Sin descripción')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('discount_type')
                     ->label('Descuento')
                     ->state(fn (Promotion $record): string => match ($record->discount_type) {
@@ -70,7 +78,8 @@ class PromotionsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->authorizeIndividualRecords(fn (Model $record): bool => PromotionResource::canDelete($record)),
                 ]),
             ]);
     }

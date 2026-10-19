@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class SaleResource extends Resource
@@ -42,6 +43,38 @@ class SaleResource extends Resource
     public static function canCreate(): bool
     {
         return static::canViewAny();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    /**
+     * Los administradores cancelan cualquier venta; los cajeros solo las suyas.
+     */
+    public static function canCancel(?Model $record = null): bool
+    {
+        $user = auth()->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $user->isCashier()) {
+            return false;
+        }
+
+        return $record instanceof Sale && $record->user_id === $user->id;
     }
 
     public static function form(Schema $schema): Schema

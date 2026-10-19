@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Inventories\Tables;
 
+use App\Filament\Resources\Inventories\InventoryResource;
 use App\Models\Inventory;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -9,6 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class InventoriesTable
 {
@@ -98,7 +100,8 @@ class InventoriesTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->authorizeIndividualRecords(fn (Model $record): bool => InventoryResource::canDelete($record)),
                 ]),
             ]);
     }

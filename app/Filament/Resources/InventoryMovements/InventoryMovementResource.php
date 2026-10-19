@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
@@ -33,6 +34,25 @@ class InventoryMovementResource extends Resource
     protected static ?int $navigationSort = -80;
 
     protected static ?string $recordTitleAttribute = 'description';
+
+    public static function getRecordTitle(?Model $record): string|Htmlable|null
+    {
+        if (! $record instanceof InventoryMovement) {
+            return parent::getRecordTitle($record);
+        }
+
+        if (filled($record->description)) {
+            return $record->description;
+        }
+
+        $productName = $record->inventory?->product?->name;
+
+        if ($productName === null) {
+            return parent::getRecordTitle($record);
+        }
+
+        return sprintf('%s — %s', $productName, $record->type->getLabel());
+    }
 
     public static function canViewAny(): bool
     {

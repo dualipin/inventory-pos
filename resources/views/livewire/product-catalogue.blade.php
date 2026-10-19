@@ -113,9 +113,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 gsap-stagger-container">
             @foreach($products as $product)
                 @php
-                    $physical = $product->inventory?->physical_stock ?? 0;
-                    $digital = $product->inventory?->digital_stock ?? 0;
-                    $hasStock = $physical > 0 || $digital > 0;
+                    $stock = $product->inventory?->stock ?? 0;
+                    $hasStock = $stock > 0;
                 @endphp
                 <div class="card bg-white rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 overflow-hidden flex flex-col gsap-stagger-item group">
                     <!-- Imagen de Producto & Badges -->
@@ -146,12 +145,12 @@
                             @endif
                         </div>
 
-                        <!-- Indicador si tiene innovación registrada -->
-                        @if($product->innovations->count() > 0)
+                        <!-- Indicador de disponibilidad del producto -->
+                        @if($product->is_active)
                             <div class="absolute bottom-3 left-4">
-                                <span class="badge badge-xs bg-amber-500 text-white font-bold py-1 px-2 rounded-full shadow-sm flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                    Innovación de Empaque
+                                <span class="badge badge-xs bg-emerald-500 text-white font-bold py-1 px-2 rounded-full shadow-sm flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Producto disponible
                                 </span>
                             </div>
                         @endif
@@ -177,23 +176,16 @@
                                         <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                         Empaque:
                                     </span>
-                                    <span class="font-semibold text-slate-800">{{ $product->packaging }}</span>
+                                    <span class="font-semibold text-slate-800">{{ $product->packaging?->getLabel() ?? 'Sin especificar' }}</span>
                                 </div>
                                 <div class="flex items-center justify-between text-slate-600">
                                     <span class="flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        Stock Físico (CEDIS):
+                                        Existencias (CEDIS):
                                     </span>
-                                    <span class="font-bold {{ $physical > 20 ? 'text-emerald-700' : ($physical > 0 ? 'text-amber-600' : 'text-red-500') }}">
-                                        {{ number_format($physical) }} uds
+                                    <span class="font-bold {{ $stock > 20 ? 'text-emerald-700' : ($stock > 0 ? 'text-amber-600' : 'text-red-500') }}">
+                                        {{ number_format($stock) }} uds
                                     </span>
-                                </div>
-                                <div class="flex items-center justify-between text-slate-600">
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                                        Stock Digital (Plataforma):
-                                    </span>
-                                    <span class="font-bold text-slate-800">{{ number_format($digital) }} uds</span>
                                 </div>
                             </div>
                         </div>

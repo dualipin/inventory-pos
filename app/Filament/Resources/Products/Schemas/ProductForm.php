@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Enums\ProductPackaging;
+use App\Enums\ProductUnit;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class ProductForm
@@ -21,16 +24,35 @@ class ProductForm
                     ->label('Nombre comercial')
                     ->required()
                     ->maxLength(255),
+                TextInput::make('barcode')
+                    ->label('Código de barras')
+                    ->required()
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true)
+                    ->helperText('Identificador único del producto en el punto de venta.'),
                 TextInput::make('price')
                     ->label('Precio')
                     ->required()
                     ->numeric()
                     ->minValue(0)
                     ->prefix('$'),
-                TextInput::make('packaging')
-                    ->label('Empaque')
+                TextInput::make('cost')
+                    ->label('Costo')
                     ->required()
-                    ->maxLength(255),
+                    ->numeric()
+                    ->minValue(0)
+                    ->prefix('$')
+                    ->helperText('Costo de adquisición, usado para calcular el margen.'),
+                Select::make('packaging')
+                    ->label('Empaque')
+                    ->options(ProductPackaging::class)
+                    ->required()
+                    ->native(false),
+                Select::make('unit')
+                    ->label('Unidad de medida')
+                    ->options(ProductUnit::class)
+                    ->required()
+                    ->native(false),
                 TextInput::make('presentation')
                     ->label('Presentación')
                     ->required()
@@ -39,6 +61,10 @@ class ProductForm
                     ->label('Tamaño')
                     ->required()
                     ->maxLength(255),
+                Toggle::make('is_active')
+                    ->label('Producto activo')
+                    ->helperText('Solo los productos activos se ofrecen en el punto de venta.')
+                    ->default(true),
                 SpatieMediaLibraryFileUpload::make('image')
                     ->label('Imagen del producto')
                     ->collection('image')

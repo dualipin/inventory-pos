@@ -8,10 +8,16 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class InventoryMovementForm
 {
+    /**
+     * Cantidad máxima de unidades que admite un movimiento.
+     */
+    private const MAX_QUANTITY = 1_000_000;
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -45,6 +51,7 @@ class InventoryMovementForm
                             ->options(MovementType::class)
                             ->default(MovementType::Purchase)
                             ->required()
+                            ->live()
                             ->helperText('Compra y devolución suman unidades. Venta y merma las restan. Un ajuste corrige el total.'),
                     ])
                     ->columns(2)
@@ -58,19 +65,27 @@ class InventoryMovementForm
                             ->required()
                             ->numeric()
                             ->integer()
-                            ->minValue(1)
+                            ->minValue(fn (Get $get): int => self::isAdjustment($get('type'))
+                                ? -self::MAX_QUANTITY
+                                : 1)
+                            ->maxValue(self::MAX_QUANTITY)
                             ->suffix('unidades')
-                            ->helperText('Escribe solo el número. No necesitas usar signos + o -.'),
+                            ->helperText('Escribe solo el número. En un ajuste puedes escribir un número negativo para descontar unidades.'),
                         Textarea::make('description')
                             ->label('Motivo')
                             ->placeholder('Ejemplo: Recepción de mercancía del proveedor')
                             ->helperText('Describe brevemente qué originó este cambio.')
-                            ->rows(3)
-                            ->required(),
+                            ->rows(3),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
             ])
             ->columns(2);
+    }
+
+    private static function isAdjustment(mixed $type): bool
+    {
+        return $type === MovementType::Adjustment
+            || $type === MovementType::Adjustment->value;
     }
 }

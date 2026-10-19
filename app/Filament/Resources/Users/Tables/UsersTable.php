@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class UsersTable
 {
@@ -21,6 +23,10 @@ class UsersTable
                 TextColumn::make('email')
                     ->label('Correo electrónico')
                     ->searchable()
+                    ->sortable(),
+                TextColumn::make('role')
+                    ->label('Responsabilidad')
+                    ->badge()
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Registrado')
@@ -39,7 +45,8 @@ class UsersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->authorizeIndividualRecords(fn (Model $record): bool => UserResource::canDelete($record)),
                 ]),
             ]);
     }

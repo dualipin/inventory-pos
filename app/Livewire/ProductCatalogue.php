@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Enums\ProductPackaging;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Contracts\View\View;
@@ -65,14 +66,21 @@ class ProductCatalogue extends Component
             ->get();
 
         $query = Product::query()
-            ->with(['category', 'inventory', 'innovations'])
+            ->with(['category', 'inventory'])
+            ->where('is_active', true)
             ->when($this->search !== '', function ($q) {
                 $term = '%'.$this->search.'%';
-                $q->where(function ($sub) use ($term) {
+                $packagings = $this->matchingPackagings();
+
+                $q->where(function ($sub) use ($term, $packagings) {
                     $sub->where('name', 'like', $term)
                         ->orWhere('presentation', 'like', $term)
-                        ->orWhere('packaging', 'like', $term)
-                        ->orWhere('size', 'like', $term);
+                        ->orWhere('size', 'like', $term)
+                        ->orWhere('barcode', 'like', $term);
+
+                    if ($packagings !== []) {
+                        $sub->orWhereIn('packaging', $packagings);
+                    }
                 });
             })
             ->when($this->selectedCategory, function ($q) {
@@ -80,8 +88,7 @@ class ProductCatalogue extends Component
             })
             ->when($this->onlyInStock, function ($q) {
                 $q->whereHas('inventory', function ($inv) {
-                    $inv->where('digital_stock', '>', 0)
-                        ->orWhere('physical_stock', '>', 0);
+                    $inv->where('stock', '>', 0);
                 });
             });
 
@@ -97,7 +104,27 @@ class ProductCatalogue extends Component
         return view('livewire.product-catalogue', [
             'products' => $products,
             'categories' => $categories,
-            'totalCount' => Product::count(),
+            'totalCount' => Product::query()->where('is_active', true)->count(),
         ]);
+    }
+
+    /**
+     * Empaques cuyo valor o etiqueta coinciden con la búsqueda.
+     *
+     * @return array<int, string>
+     */
+    private function matchingPackagings(): array
+    {
+        $search = mb_strtolower(trim($this->search));
+
+        if ($search === '') {
+            return [];
+        }
+
+        return collect(ProductPackaging::cases())
+            ->filter(fn (ProductPackaging $packaging): bool => str_contains($packaging->value, $search)
+                || str_contains(mb_strtolower($packaging->getLabel()), $search))
+            ->pluck('value')
+            ->all();
     }
 }

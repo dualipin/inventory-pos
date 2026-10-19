@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Promotions\Pages;
 use App\Filament\Resources\Promotions\PromotionResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class EditPromotion extends EditRecord
 {
@@ -13,7 +14,8 @@ class EditPromotion extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->visible(fn (Model $record): bool => PromotionResource::canDelete($record)),
         ];
     }
 }

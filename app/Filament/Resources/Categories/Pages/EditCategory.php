@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Categories\Pages;
 use App\Filament\Resources\Categories\CategoryResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class EditCategory extends EditRecord
 {
@@ -13,7 +14,8 @@ class EditCategory extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->visible(fn (Model $record): bool => CategoryResource::canDelete($record)),
         ];
     }
 }
