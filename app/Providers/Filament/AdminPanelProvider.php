@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('assets/logo.png'))
             ->brandLogoHeight('2.5rem')
             ->profile()
+            ->spa()
             ->colors([
                 'primary' => Color::Mist,
             ])
