@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Sales;
 
-use App\Enums\UserRole;
 use App\Filament\Resources\Sales\Pages\CreateSale;
 use App\Filament\Resources\Sales\Pages\ListSales;
 use App\Filament\Resources\Sales\Schemas\SaleForm;
@@ -14,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
@@ -35,14 +35,31 @@ class SaleResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'folio';
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user !== null && $user->isCashier()) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
+    }
+
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(UserRole::ADMIN, UserRole::CASHIER) ?? false;
+        return auth()->user()?->can('viewAny', Sale::class) ?? false;
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()?->can('view', $record) ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->can('create', Sale::class) ?? false;
     }
 
     public static function canEdit(Model $record): bool
@@ -55,26 +72,21 @@ class SaleResource extends Resource
         return false;
     }
 
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
+
     /**
      * Los administradores cancelan cualquier venta; los cajeros solo las suyas.
      */
     public static function canCancel(?Model $record = null): bool
     {
-        $user = auth()->user();
-
-        if ($user === null) {
+        if (! $record instanceof Sale) {
             return false;
         }
 
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        if (! $user->isCashier()) {
-            return false;
-        }
-
-        return $record instanceof Sale && $record->user_id === $user->id;
+        return auth()->user()?->can('cancel', $record) ?? false;
     }
 
     public static function form(Schema $schema): Schema

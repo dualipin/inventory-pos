@@ -56,7 +56,8 @@ class PromotionsTable
                     ->dateTime()
                     ->sortable(),
                 ToggleColumn::make('is_active')
-                    ->label('Activa'),
+                    ->label('Activa')
+                    ->disabled(fn (Model $record): bool => ! PromotionResource::canEdit($record)),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

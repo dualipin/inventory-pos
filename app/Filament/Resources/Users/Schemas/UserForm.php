@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\UserRole;
+use App\Models\User;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -28,7 +29,11 @@ class UserForm
                     ->label('Responsabilidad')
                     ->options(UserRole::class)
                     ->required()
-                    ->native(false),
+                    ->native(false)
+                    ->disabled(fn (?User $record): bool => $record !== null && ($record->id === auth()->id() || ! (auth()->user()?->can('changeRole', $record) ?? false)))
+                    ->helperText(fn (?User $record): ?string => $record !== null && $record->id === auth()->id()
+                        ? 'No puedes cambiar tu propio rol de administrador.'
+                        : null),
                 TextInput::make('password')
                     ->label('Contraseña')
                     ->password()

@@ -67,7 +67,8 @@ class ProductsTable
                     ->label('Tamaño')
                     ->searchable(),
                 ToggleColumn::make('is_active')
-                    ->label('Activo'),
+                    ->label('Activo')
+                    ->disabled(fn (Model $record): bool => ! ProductResource::canEdit($record)),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

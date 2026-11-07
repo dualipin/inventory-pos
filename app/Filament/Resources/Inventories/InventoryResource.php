@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Inventories;
 
-use App\Enums\UserRole;
 use App\Filament\Resources\Inventories\Pages\CreateInventory;
 use App\Filament\Resources\Inventories\Pages\EditInventory;
 use App\Filament\Resources\Inventories\Pages\ListInventories;
@@ -53,22 +52,27 @@ class InventoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(UserRole::ADMIN, UserRole::INVENTORY) ?? false;
+        return auth()->user()?->can('viewAny', Inventory::class) ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->can('create', Inventory::class) ?? false;
     }
 
     public static function canEdit(Model $record): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->can('update', $record) ?? false;
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        return auth()->user()?->can('delete', $record) ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('deleteAny', Inventory::class) ?? false;
     }
 
     public static function form(Schema $schema): Schema

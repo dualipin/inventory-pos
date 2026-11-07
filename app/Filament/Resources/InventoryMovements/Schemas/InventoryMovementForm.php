@@ -44,6 +44,7 @@ class InventoryMovementForm
                             ->searchPrompt('Busca por nombre de producto')
                             ->placeholder('Selecciona un producto')
                             ->preload()
+                            ->exists('inventories', 'id')
                             ->required()
                             ->helperText('También verás cuántas unidades hay disponibles.'),
                         Select::make('type')

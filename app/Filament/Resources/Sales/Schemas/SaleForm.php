@@ -34,6 +34,8 @@ class SaleForm
                             ->all())
                         ->searchable()
                         ->preload()
+                        ->exists('inventories', 'id')
+                        ->distinct()
                         ->required(),
                     TextInput::make('quantity')
                         ->label('Cantidad')

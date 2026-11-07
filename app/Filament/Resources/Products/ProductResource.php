@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Products;
 
-use App\Enums\UserRole;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
@@ -35,22 +34,47 @@ class ProductResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(UserRole::ADMIN, UserRole::INVENTORY) ?? false;
+        return auth()->user()?->can('viewAny', Product::class) ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->can('create', Product::class) ?? false;
     }
 
     public static function canEdit(Model $record): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->can('update', $record) ?? false;
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        return auth()->user()?->can('delete', $record) ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('deleteAny', Product::class) ?? false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return auth()->user()?->can('restore', $record) ?? false;
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return auth()->user()?->can('restoreAny', Product::class) ?? false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return auth()->user()?->can('forceDelete', $record) ?? false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return auth()->user()?->can('forceDeleteAny', Product::class) ?? false;
     }
 
     public static function form(Schema $schema): Schema

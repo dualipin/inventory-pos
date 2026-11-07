@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\InventoryMovements;
 
-use App\Enums\UserRole;
 use App\Filament\Resources\InventoryMovements\Pages\CreateInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Pages\ListInventoryMovements;
 use App\Filament\Resources\InventoryMovements\Schemas\InventoryMovementForm;
@@ -56,12 +55,12 @@ class InventoryMovementResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(UserRole::ADMIN, UserRole::INVENTORY) ?? false;
+        return auth()->user()?->can('viewAny', InventoryMovement::class) ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return static::canViewAny();
+        return auth()->user()?->can('create', InventoryMovement::class) ?? false;
     }
 
     public static function canEdit(Model $record): bool
@@ -70,6 +69,11 @@ class InventoryMovementResource extends Resource
     }
 
     public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
     {
         return false;
     }
